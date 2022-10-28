@@ -1,0 +1,1 @@
+get-cmiinstance win32_userprofile -verbose | Where-Object {$_.LastUseTime -lt $(Get-Date).Date.adddays(-60)}| Remove-CimInstance -Verbose

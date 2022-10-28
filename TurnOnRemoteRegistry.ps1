@@ -1,0 +1,1 @@
+Get-CimInstance -Class Win32_Service -ComputerName doc-annex-l3 -Filter 'Name = "RemoteRegistry"' -ErrorAction Stop | Set-service -name RemoteRegistry -StartupType Manual -ErrorAction Stop
