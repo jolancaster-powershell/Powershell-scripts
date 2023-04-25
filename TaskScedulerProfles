@@ -1,0 +1,35 @@
+$days = 45
+
+# Define the action to be taken by the scheduled task
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$($PSScriptRoot)\DeleteOldProfiles.ps1`""
+
+# Define the trigger for the scheduled task to run daily at 12:00 AM
+$trigger = New-ScheduledTaskTrigger -Daily -At 12:00AM
+
+# Define the settings for the scheduled task
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RunOnlyIfIdle -StartWhenAvailable -StopIfGoingOnBatteries
+
+# Create the scheduled task and register it with Task Scheduler
+Register-ScheduledTask -TaskName "DeleteOldProfiles" -Action $action -Trigger $trigger -Settings $settings -User "SYSTEM"
+
+# Create the PowerShell script that will delete old profiles
+$script = @"
+$days = $days
+$now = Get-Date
+$path = "C:\Users\"
+
+foreach ($user in Get-ChildItem $path) {
+    $profile = $path + $user.Name
+    $lastModified = (Get-Item $profile).LastWriteTime
+    $daysSinceModified = ($now - $lastModified).Days
+
+    if (($user.PSIsContainer) -and ($daysSinceModified -gt $days) -and ($user.Name -ne "Public") -and ($user.Name -ne "Default")) {
+        Remove-Item $profile -Recurse -Force
+        Write-Host "Deleted profile for $($user.Name)"
+    }
+}
+"@
+
+# Save the PowerShell script to a file
+$scriptPath = "$($PSScriptRoot)\DeleteOldProfiles.ps1"
+$script | Out-File -FilePath $scriptPath -Encoding utf8 -Force
