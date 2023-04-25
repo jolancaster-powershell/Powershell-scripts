@@ -1,0 +1,10 @@
+Import-Module ActiveDirectory
+
+$DaysInactive = 90
+$InactiveDate = (Get-Date).Adddays(-($DaysInactive))
+
+$Computers = Get-ADUser -Filter { LastLogonDate -lt $InactiveDate -and Enabled -eq $true } -Properties LastLogonDate | Select-Object Name, LastLogonDate, DistinguishedName
+
+ForEach ($Item in $Computers){
+    Write-Output $($Item.Name)
+}
