@@ -1,0 +1,14 @@
+$days = 45
+$now = Get-Date
+$path = "C:\Users\"
+
+foreach ($user in Get-ChildItem $path) {
+    $profile = $path + $user.Name
+    $lastModified = (Get-Item $profile).LastWriteTime
+    $daysSinceModified = ($now - $lastModified).Days
+
+    if (($user.PSIsContainer) -and ($daysSinceModified -gt $days) -and ($user.Name -ne "Public") -and ($user.Name -ne "Default")) {
+        Remove-Item $profile -Recurse -Force
+        Write-Host "Deleted profile for $($user.Name)"
+    }
+}
