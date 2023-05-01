@@ -1,0 +1,328 @@
+ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+   Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+   exit
+ }
+
+$Global:List = $null
+$ping = new-object system.net.networkinformation.ping
+
+function Selected {
+$strComputer = $ComboBoxList.SelectedItem
+
+if ($ping.send($strComputer).Status -eq "Success"){
+
+$OperatingSystem = Get-WmiObject -ComputerName $strComputer cim_operatingsystem
+$System = Get-WmiObject -ComputerName $strComputer Win32_ComputerSystem
+$BIOS = Get-WmiObject -ComputerName $strComputer win32_bios
+
+$InfoBox.text = $null
+$encryption = $null
+$protection = $null
+$SystemUser = $System.UserName
+
+if ($System.UserName -eq $null){
+$SystemUser = "No User Logged On"
+}
+
+$Lastuser = Get-ChildItem "\\$strComputer\c$\Users" | Sort-Object LastWriteTime -Descending | Where {$_.Name -ne $env:USERNAME}| Select-Object Name, LastWriteTime -first 3
+
+$LSTUSERS =$Lastuser.name[0] + "  " + $Lastuser.Lastwritetime[0] + "`r`n"
+$LSTUSERS +=$Lastuser.name[1] + "  " + $Lastuser.Lastwritetime[1] + "`r`n"
+$LSTUSERS +=$Lastuser.name[2] + "  " + $Lastuser.Lastwritetime[2]
+
+$HDD = Get-WmiObject -ComputerName $strComputer Win32_LogicalDisk -Filter drivetype=3
+
+#This gets the Windows 10 release name
+if ($OperatingSystem.BuildNumber -eq 10240) {$OSBuild = "1507"}
+if ($OperatingSystem.BuildNumber -eq 10586) {$OSBuild = "1511"}
+if ($OperatingSystem.BuildNumber -eq 14393) {$OSBuild = "1607"}
+if ($OperatingSystem.BuildNumber -eq 15063) {$OSBuild = "1703"}
+if ($OperatingSystem.BuildNumber -eq 16299) {$OSBuild = "1709"}
+if ($OperatingSystem.BuildNumber -eq 17134) {$OSBuild = "1803"}
+
+$systemTXT = $System.name
+$UsernameTXT = $System.UserName
+$ADPathTXT = $adOU.DistinguishedName
+$OperatingSystemCaption = $OperatingSystem.Caption
+$LastBootTXT = (Get-CimInstance -ComputerName $strComputer win32_OperatingSystem).LastBootUpTime
+$ManufacturerTXT = $System.Manufacturer
+$ModelTXT = $System.Model
+$BIOSTXT = $BIOS.SMBIOSBIOSVersion
+
+$MemoryTXT = "{0:N2}" -f ($System.TotalPhysicalMemory/1GB) + "GB"
+$HDCApacityTXT = "{0:N2}" -f (($HDD | Where {$_.deviceID -contains "C:"}).size/1GB) + "GB"
+$HDFreeTXT = "{0:P2}" -f (($HDD | Where {$_.deviceID -contains "C:"}).FreeSpace/($HDD | Where {$_.deviceID -contains "C:"}).Size) + " (" + "{0:N2}" -f (($HDD | Where {$_.deviceID -contains "C:"}).FreeSpace/1GB) + "GB)"
+
+
+$InfoBox.Text += "`r`nNetBIOS Name : $systemTXT"
+
+$InfoBox.Text += "`r`n`r`nOperating System Information:"
+$InfoBox.Text += "`r`nOperating System ..: $OperatingSystemCaption"
+if ($OSBuild -ge 10) {$InfoBox.Text += "`r`nWindows 10 Release : $OSBuild"}
+$InfoBox.Text += "`r`nLast Boot Up Time .: $LastBootTXT"
+
+$InfoBox.Text += "`r`n`r`nHardware Information:"
+$InfoBox.Text += "`r`nManufacturer .: $ManufacturerTXT"
+$InfoBox.Text += "`r`nModel ........: $ModelTXT"
+$InfoBox.Text += "`r`nBIOS Version .: $BIOSTXT"
+$InfoBox.Text += "`r`nMemory .......: $MemoryTXT"
+$InfoBox.Text += "`r`nC: Capacity ..: $HDCApacityTXT"
+$InfoBox.Text += "`r`nC: Free Space : $HDFreeTXT"
+
+$InfoBox.Text += "`r`n`r`nCurrent User Logged On:"
+$InfoBox.Text += "`r`n` $SystemUser"
+
+$InfoBox.Text += "`r`n`r`nLast 3 Logged on users:"
+$InfoBox.Text += "`r`n$LSTUSERS"
+
+Write-Host $ComboBoxList.SelectedItem
+}
+
+else {
+$InfoBox.text = "$strComputer is Offline"
+}
+
+}
+
+function Selected2 {
+$strComputer = $ComboBoxList.SelectedItem
+
+$OperatingSystem = Get-WmiObject -ComputerName $strComputer cim_operatingsystem
+$System = Get-WmiObject -ComputerName $strComputer Win32_ComputerSystem
+$BIOS = Get-WmiObject -ComputerName $strComputer win32_bios
+
+$InfoBox.text = $null
+$encryption = $null
+$protection = $null
+$SystemUser = $System.UserName
+
+if ($System.UserName -eq $null){
+$SystemUser = "No User Logged On"
+}
+
+$Lastuser = Get-ChildItem "\\$strComputer\c$\Users" | Sort-Object LastWriteTime -Descending | Where {$_.Name -ne $env:USERNAME}| Select-Object Name, LastWriteTime -first 3
+
+$LSTUSERS =$Lastuser.name[0] + "  " + $Lastuser.Lastwritetime[0] + "`r`n"
+$LSTUSERS +=$Lastuser.name[1] + "  " + $Lastuser.Lastwritetime[1] + "`r`n"
+$LSTUSERS +=$Lastuser.name[2] + "  " + $Lastuser.Lastwritetime[2]
+
+$HDD = Get-WmiObject -ComputerName $strComputer Win32_LogicalDisk -Filter drivetype=3
+
+#This gets the Windows 10 release name
+if ($OperatingSystem.BuildNumber -eq 10240) {$OSBuild = "1507"}
+if ($OperatingSystem.BuildNumber -eq 10586) {$OSBuild = "1511"}
+if ($OperatingSystem.BuildNumber -eq 14393) {$OSBuild = "1607"}
+if ($OperatingSystem.BuildNumber -eq 15063) {$OSBuild = "1703"}
+if ($OperatingSystem.BuildNumber -eq 16299) {$OSBuild = "1709"}
+if ($OperatingSystem.BuildNumber -eq 17134) {$OSBuild = "1803"}
+
+$systemTXT = $System.name
+$UsernameTXT = $System.UserName
+$ADPathTXT = $adOU.DistinguishedName
+$OperatingSystemCaption = $OperatingSystem.Caption
+$LastBootTXT = (Get-CimInstance -ComputerName $strComputer win32_OperatingSystem).LastBootUpTime
+$ManufacturerTXT = $System.Manufacturer
+$ModelTXT = $System.Model
+$BIOSTXT = $BIOS.SMBIOSBIOSVersion
+
+$MemoryTXT = "{0:N2}" -f ($System.TotalPhysicalMemory/1GB) + "GB"
+$HDCApacityTXT = "{0:N2}" -f (($HDD | Where {$_.deviceID -contains "C:"}).size/1GB) + "GB"
+$HDFreeTXT = "{0:P2}" -f (($HDD | Where {$_.deviceID -contains "C:"}).FreeSpace/($HDD | Where {$_.deviceID -contains "C:"}).Size) + " (" + "{0:N2}" -f (($HDD | Where {$_.deviceID -contains "C:"}).FreeSpace/1GB) + "GB)"
+
+$InfoBox.Text += "`r`nNetBIOS Name : $systemTXT"
+
+$InfoBox.Text += "`r`n`r`nOperating System Information:"
+$InfoBox.Text += "`r`nOperating System ..: $OperatingSystemCaption"
+if ($OSBuild -ge 10) {$InfoBox.Text += "`r`nWindows 10 Release : $OSBuild"}
+$InfoBox.Text += "`r`nLast Boot Up Time .: $LastBootTXT"
+
+$InfoBox.Text += "`r`n`r`nHardware Information:"
+$InfoBox.Text += "`r`nManufacturer .: $ManufacturerTXT"
+$InfoBox.Text += "`r`nModel ........: $ModelTXT"
+$InfoBox.Text += "`r`nBIOS Version .: $BIOSTXT"
+$InfoBox.Text += "`r`nMemory .......: $MemoryTXT"
+$InfoBox.Text += "`r`nC: Capacity ..: $HDCApacityTXT"
+$InfoBox.Text += "`r`nC: Free Space : $HDFreeTXT"
+
+$InfoBox.Text += "`r`n`r`nCurrent User Logged On:"
+$InfoBox.Text += "`r`n` $SystemUser"
+
+$InfoBox.Text += "`r`n`r`nLast 3 Logged on users:"
+$InfoBox.Text += "`r`n$LSTUSERS"
+
+Write-Host $ComboBoxList.SelectedItem
+}
+
+function Next {
+$computer = $ComboBoxList.selecteditem
+$i = 0
+$Connected = 0
+$maxIndex = $Global:List.Length - 1
+While ($i -le $Global:List.Length){
+    #Write-Host "Check One"
+    if ($Global:List[$i] -eq $computer){
+        Write-Host "Check Two"
+        $a = $i+1
+        do {
+            #Write-Host "Check Three"
+            if ($a -eq $maxIndex) {
+                $a = 0
+                $i = 0
+            }
+            $NextIndexNumber = $a
+            $computer = $Global:List[$NextIndexNumber]
+            Write-Host "Pinging: $computer"
+            if ($ping.send($computer).Status -eq "Success"){
+                If (test-path -Path "\\$computer\c$\") {
+                Write-Host "Anybody logged on?"
+                    $user = (Get-WmiObject -ComputerName $computer Win32_ComputerSystem).username
+                    if ($user -eq $null){
+                        Write-Host -ForegroundColor Green "Nope! Displaying "$computer.index
+                        $Connected = 1
+                        #Write-Host $computer.index
+                        $ComboBoxList.selecteditem = $computer
+                        $strComputer = $ComboBoxList.SelectedItem
+                        Selected2
+                        break
+                    }
+               }
+            }
+            $a++
+            if ($Connected -eq 1) {break}
+        } while ($Connected -eq 0)
+       if ($Connected -eq 1) {break}
+        Write-Host "Check Six"
+    }
+    if ($Connected -eq 1) {break}
+    $i++
+}
+}
+
+Function LoadComboBox {
+
+foreach ($Computer in $Global:List){
+$ComboBoxList.items.add($Computer)
+}
+}
+
+function DameWare{
+$strComputer = $ComboBoxList.selecteditem
+ if ((Test-Path 'C:\Program Files (x86)\SolarWinds\DameWare Remote Support\DWRCC.exe') -eq $True) 
+  {
+   & 'C:\Program Files (x86)\SolarWinds\DameWare Remote Support\DWRCC.exe' -c: -lrc: -a:1 -m:$strComputer
+  }
+ elseif ((Test-Path 'C:\Program Files\SolarWinds\DameWare Mini Remote Control x64\DWRCC.exe') -eq $True)
+  {
+   & 'C:\Program Files\SolarWinds\DameWare Mini Remote Control x64\DWRCC.exe' -c: -lrc: -a:1 -m:$strComputer
+  }
+ Else
+ {
+  $outputBox.text="Cannot Find Dameware"
+ }
+}
+
+Function RDC {
+$strcomputer = $ComboBoxList.selecteditem
+MSTSC /v:$strComputer
+}
+
+Function GetFileName {
+$OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+$OpenFileDialog.initialDirectory = $initialDirectory
+$OpenFileDialog.filter = "Data files|*.csv;*.txt"
+$OpenFileDialog.ShowDialog() | Out-Null
+$Global:List = Get-Content $OpenFileDialog.FileName
+if ($OpenFileDialog.FileName -ne $null){
+LoadComboBox
+}
+$ComboBoxList.SelectedItem = $Global:List[0]
+}
+
+
+[void] [reflection.assembly]::LoadWithPartialName( "System.Windows.Forms")
+[void] [reflection.assembly]::LoadWithPartialName( "System.Drawing")
+[void] [System.Windows.Forms.Application]::EnableVisualStyles()
+
+
+$form= New-Object Windows.Forms.Form
+$Form.FormBorderStyle=[System.Windows.Forms.FormBorderStyle]::FixedDialog
+$form.Size = New-Object Drawing.Point 670,440
+$form.Font = New-Object System.Drawing.Font("Verdana",11,[System.Drawing.FontStyle]::regular)
+$Form.ForeColor = "White"
+$form.BackColor = "lightblue"
+$Form.MinimizeBox = $True
+$Form.MaximizeBox = $True
+$Form.SizeGripStyle = "Hide"
+$Form.WindowState = "Normal"
+$form.text = "Needs Attention"
+$Form.KeyPreview = $True
+$Form.Add_KeyDown({if ($_.KeyCode -eq "Escape"){$Form.Close()}})
+$formGraphics = $form.createGraphics()
+
+$ButtonSelect = New-Object Windows.Forms.Button
+$ButtonSelect.Location = New-Object System.Drawing.Size(20,125) 
+$ButtonSelect.Size = New-Object Drawing.Point 140,50
+$ButtonSelect.ForeColor = "White"
+$ButtonSelect.BackColor = "DarkSlateGray" 
+$ButtonSelect.text = "View Selected"
+$ButtonSelect.add_click({Selected})
+$form.controls.add($ButtonSelect)
+
+$ButtonNext = New-Object Windows.Forms.Button
+$ButtonNext.Location = New-Object System.Drawing.Size(20,185) 
+$ButtonNext.Size = New-Object Drawing.Point 140,50
+$ButtonNext.ForeColor = "White"
+$ButtonNext.BackColor = "DarkSlateGray" 
+$ButtonNext.text = "Next Open"
+$ButtonNext.add_click({Next})
+$form.controls.add($ButtonNext)
+
+$ButtonLoad = New-Object Windows.Forms.Button
+$ButtonLoad.Location = New-Object System.Drawing.Size(20,65) 
+$ButtonLoad.Size = New-Object Drawing.Point 140,50
+$ButtonLoad.ForeColor = "White"
+$ButtonLoad.BackColor = "DarkSlateGray" 
+$ButtonLoad.text = "Load File for List"
+$ButtonLoad.add_click({GetFileName})
+$form.controls.add($ButtonLoad)
+
+$ButtonDameware = New-Object Windows.Forms.Button
+$ButtonDameware.Location = New-Object System.Drawing.Size(20,270) 
+$ButtonDameware.Size = New-Object Drawing.Point 140,50
+$ButtonDameware.ForeColor = "White"
+$ButtonDameware.BackColor = "DarkSlateGray" 
+$ButtonDameware.text = "DameWare"
+$ButtonDameware.add_click({DameWare})
+$form.controls.add($ButtonDameware)
+
+$ButtonRDC = New-Object Windows.Forms.Button
+$ButtonRDC.Location = New-Object System.Drawing.Size(20,330) 
+$ButtonRDC.Size = New-Object Drawing.Point 140,50
+$ButtonRDC.ForeColor = "White"
+$ButtonRDC.BackColor = "DarkSlateGray" 
+$ButtonRDC.text = "Remote Desktop Connection"
+$ButtonRDC.add_click({RDC})
+$form.controls.add($ButtonRDC)
+
+$InfoBox = New-Object System.Windows.Forms.TextBox
+$InfoBox.BackColor = "White"
+$InfoBox.ForeColor = "Black"
+$InfoBox.Font = New-Object System.Drawing.Font("CONSOLAS",10,[System.Drawing.FontStyle]::bold)
+$InfoBox.Location = New-Object System.Drawing.Point 180,20
+$InfoBox.Size = New-Object System.Drawing.Point 450,360
+$InfoBox.Multiline = $True
+$InfoBox.ScrollBars = "Vertical"
+$form.controls.add($InfoBox)
+
+$ComboBoxList = New-Object System.Windows.Forms.ComboBox
+$ComboBoxList.BackColor = "White"
+$ComboBoxList.ForeColor = "Black"
+$ComboBoxList.Font = New-Object System.Drawing.Font("CONSOLAS",10)
+$ComboBoxList.Location = New-Object System.Drawing.Point 20,20
+$ComboBoxList.Size = New-Object System.Drawing.Point 140,30
+$form.controls.add($ComboBoxList)
+
+#LoadComboBox
+
+$form.Add_Shown({$form.Activate()})
+$form.ShowDialog()
